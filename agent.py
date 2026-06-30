@@ -108,8 +108,25 @@ def agent(messages: list[BaseMessage]):
     return messages
 
 # Invoke
-messages = [HumanMessage(content="multiply 9 and 4.")]
-stream = agent.stream_events(messages, version="v3")
-for snapshot in stream.values:
-    print(snapshot)
-    print("\n")
+if __name__ == "__main__":
+    initial_messages = [HumanMessage(content="multiply 9 and 4.")]
+    final_messages = agent.invoke(initial_messages)
+    
+    print("\n--- Conversation Summary ---")
+    for m in final_messages:
+        if m.type == "human":
+            print(f"Human: {m.content}")
+        elif m.type == "ai":
+            if m.tool_calls:
+                calls = ", ".join([f"{tc['name']}({tc['args']})" for tc in m.tool_calls])
+                print(f"AI (Tool Call): {calls}")
+            else:
+                content = m.content
+                if isinstance(content, list):
+                    content = " ".join([c.get("text", "") for c in content if c.get("type") == "text"])
+                print(f"AI: {content}")
+        elif m.type == "tool":
+            print(f"Tool ({m.name}): {m.content}")
+        else:
+            print(f"{m.type.capitalize()}: {m.content}")
+    print("----------------------------\n")
